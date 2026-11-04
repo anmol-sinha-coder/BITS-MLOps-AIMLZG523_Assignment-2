@@ -1,0 +1,336 @@
+question_id,prompt_version,model_name,prompt_text,response_text,valid_json,latency_sec,total_cost
+Q1,v1,qwen2.5:7b,"Answer the following student question clearly.
+Question: Explain the concept of backpropagation in neural networks.","Backpropagation is an essential algorithm used to train artificial neural networks, particularly those with multiple layers such as deep learning models. It's a supervised learning method that allows for efficient computation of the gradient of the loss function with respect to the weights of the network for a single input–output example, and does so by applying the chain rule repeatedly.
+
+Here’s how it works in simple steps:
+
+1. **Forward Pass**: First, you feed your input data into the neural network (the forward pass). The information moves from the input layer through hidden layers to the output layer. Each neuron processes the data using a weighted sum and passes this result through an activation function.
+
+2. **Calculate Loss**: After obtaining predictions from the output layer, compare these with the actual target values to compute a loss or error (using a suitable loss function like Mean Squared Error for regression tasks or Cross-Entropy Loss for classification tasks).
+
+3. **Backward Pass (Backpropagation)**: This is where backpropagation comes in. Starting from the output and moving backwards through each layer, we calculate how much each weight contributed to the error by applying the chain rule of calculus. The gradient of the loss function with respect to each weight is calculated.
+
+4. **Weight Update**: Once we have these gradients, we adjust the weights in a way that reduces the loss (gradient descent). This step usually involves using an optimization algorithm like Stochastic Gradient Descent (SGD) or more advanced methods such as Adam, RMSprop, etc., to iteratively update the weights.
+
+The key idea is that backpropagation allows us to efficiently compute and use these gradients without having to manually calculate them for each weight, which would be computationally infeasible in deep networks. This process is repeated many times (epochs) with different data samples until the model's performance on a validation set no longer improves or we reach an acceptable level of accuracy.
+
+Backpropagation essentially makes neural network training more feasible and effective by providing a way to calculate gradients that can be used to update weights, thereby helping the model learn from the data.",True,84.52723240852356,0.00026789999999999995
+Q2,v1,qwen2.5:7b,"Answer the following student question clearly.
+Question: What is the difference between supervised and unsupervised learning?","Certainly! Let's break down the key differences between supervised and unsupervised learning:
+
+### Supervised Learning
+- **Definition**: In supervised learning, the model learns from labeled data. This means that each training example has a known output or label.
+- **Objective**: The goal is to predict an output for new data based on what it learned during the training phase.
+- **Process**:
+  - Data: Training dataset consists of both input features and corresponding correct outputs (labels).
+  - Learning: The model adjusts its parameters by minimizing prediction errors on the given labels.
+  - Use Cases: Common applications include predicting housing prices, fraud detection, or classifying emails as spam or not.
+
+### Unsupervised Learning
+- **Definition**: In unsupervised learning, the model learns from data that does not have labeled responses. The goal is to find hidden patterns or intrinsic structures in raw, unlabeled data.
+- **Objective**: To explore the structure of the dataset and discover underlying relationships without having prior knowledge about what those relationships might be.
+- **Process**:
+  - Data: Training dataset contains only input features but no labels.
+  - Learning: The model tries to identify patterns, group similar instances together (clustering), or reduce dimensionality.
+  - Use Cases: Applications include customer segmentation, anomaly detection, recommendation systems.
+
+### Key Differences
+1. **Data Labeling**:
+   - **Supervised**: Requires labeled data where each example is tagged with a correct output.
+   - **Unsupervised**: Works with unlabeled data; no explicit guidance on what the outputs should be.
+
+2. **Purpose of Learning**:
+   - **Supervised**: To predict or classify new, unseen data based on patterns learned from known examples.
+   - **Unsupervised**: To identify structure within the data itself.
+
+3. **Outcome**:
+   - **Supervised**: Models can make predictions about unknown data after being trained on labeled examples.
+   - **Unsupervised**: Results are often interpreted in terms of discovering groups, clusters, or other latent structures in the dataset.
+
+Understanding these differences helps in choosing the right approach based on the nature and availability of your data.",True,66.03120446205139,0.00027959999999999997
+Q3,v1,qwen2.5:7b,"Answer the following student question clearly.
+Question: Describe how the Self-Attention mechanism works in Transformers.","Certainly! The self-attention mechanism is a key component of the transformer architecture used in natural language processing tasks like machine translation and text generation. Here's a clear explanation of how it works:
+
+### 1. Basic Idea:
+Self-attention, also known as scaled dot-product attention, allows each position in the sequence to attend to all positions in the input sequence. This means that every word can potentially interact with any other word in the sentence.
+
+### 2. Key Components:
+The self-attention mechanism involves three main vectors: **query (Q)**, **key (K)**, and **value (V)** for each position in the input sequence.
+
+#### a. Computation of Q, K, V:
+For every position \( i \) in the sequence:
+
+- The query vector \( Q_i \) is computed from the input vector at position \( i \).
+- The key vector \( K_j \) and value vector \( V_j \) are also computed from the input vectors at each position \( j \).
+
+Mathematically, if we have an input sequence of length \( n \), then:
+\[ Q = W_Q X, \quad K = W_K X, \quad V = W_V X \]
+where \( X \) is the input embedding matrix (of size \( n \times d \)), and \( W_Q \), \( W_K \), and \( W_V \) are learnable parameter matrices of size \( d \times d_model \).
+
+Here, \( d \) is the dimensionality of each word vector, and \( d_{model} \) is a hyperparameter (commonly set to be around 512 or higher for transformer models like BERT or GPT).
+
+#### b. Dot Product Attention:
+The core idea behind self-attention involves computing an attention score between every query vector \( Q_i \) and key vectors \( K_j \). This is done via a dot product:
+
+\[ \text{score}(Q_i, K_j) = \frac{Q_i \cdot K_j^\top}{\sqrt{d_k}} \]
+
+where \( d_k \) is the dimensionality of keys (which equals that of queries in this case).
+
+This score measures how much position \( i \) should ""attend"" to position \( j \). The division by \( \sqrt{d_k} \) is a scaling factor to keep the scores from being too large.
+
+#### c. Softmax and Weighted Sum:
+After computing these scores, we apply a softmax function along each query vector's dimension:
+
+\[ \text{Attention Scores}_{i,j} = \text{softmax}\left(\frac{Q_i \cdot K_j^\top}{\sqrt{d_k}}\right) \]
+
+This gives us a probability distribution over the sequence. We then use these probabilities to weight and sum the corresponding value vectors:
+
+\[ \text{Output}_i = \sum_{j=1}^{n} \text{Attention Scores}_{i,j} V_j \]
+
+### 3. Final Output:
+The output of this process is a weighted combination of all input vectors, giving more ""weight"" to those that are deemed most relevant by the attention mechanism.
+
+### 4. Why It Works:
+Self-attention allows the model to focus on different parts of the input sequence while processing each word. This makes it highly effective for capturing long-range dependencies in text data, which is a significant advantage over traditional RNNs and LSTMs that process sequences one element at a time.
+
+### 5. Implementation Details:
+In practice, the attention mechanism is often implemented with multi-head attention to capture different aspects of the input sequence from multiple perspectives (with separate learnable parameters for each head).
+
+This is how self-attention works in transformers, enabling efficient and powerful text processing tasks!",True,125.82261180877686,0.00048269999999999997
+Q4,v1,qwen2.5:7b,"Answer the following student question clearly.
+Question: What is overfitting in machine learning and how can it be mitigated?","Overfitting in machine learning occurs when a model performs exceptionally well on the training data but fails to generalize to new, unseen data. Essentially, the model learns not just the underlying patterns but also the noise or random fluctuations present in the training dataset. This means that while it can predict accurately on the training set, its performance drops significantly when applied to real-world or test data.
+
+### How Overfitting Happens:
+- **Model Complexity**: Models with too many parameters relative to the amount of available training data are more likely to overfit. For instance, a complex neural network with many layers and nodes can fit every detail in the training set.
+- **Noise and Irrelevant Features**: If your model includes features that aren't relevant or includes noise in the training data, it might capture these instead of general patterns.
+
+### Mitigating Overfitting:
+1. **Regularization**:
+   - Techniques like L1 (Lasso) and L2 (Ridge) regularization add a penalty to the loss function based on model complexity. This discourages overly complex models.
+   
+2. **Cross-Validation**:
+   - Instead of using all your data for training, split it into training and validation sets multiple times. Use different subsets as validation to get more reliable estimates of how well your model will perform on unseen data.
+
+3. **Early Stopping**:
+   - Monitor the performance of your model on a validation set during training. Stop training when improvement starts to slow down or stop, thus preventing further overfitting.
+   
+4. **Feature Selection/Engineering**:
+   - Reduce the number of input features by selecting only those that contribute most significantly to the prediction task. This can be done using methods like correlation analysis, mutual information, or using domain knowledge.
+
+5. **Ensemble Methods**:
+   - Techniques such as bagging and boosting create multiple models (or ""ensemble"") and combine their predictions. This reduces overfitting by averaging out errors from individual models.
+   
+6. **Data Augmentation**:
+   - In image processing tasks, you can artificially increase the size of your training dataset by applying transformations to existing images. For instance, rotating, flipping, or altering brightness.
+
+7. **Dropout in Neural Networks**:
+   - A dropout technique randomly omits some nodes during each training iteration, which helps prevent over-reliance on specific features and improves generalization.
+
+By employing these strategies, you can help ensure that your machine learning models are not only accurate on the training data but also robust and perform well when applied to new datasets.",True,128.08428263664246,0.00032760000000000005
+Q5,v1,qwen2.5:7b,"Answer the following student question clearly.
+Question: Explain the trade-off between Bias and Variance in predictive models.","Certainly! The concepts of bias and variance are crucial for understanding how well your predictive model generalizes to new, unseen data. Here's an explanation of these terms and their trade-off:
+
+### 1. Bias
+
+- **Definition**: Bias refers to the error introduced by approximating a real-world problem, which may be complex or have too many variables, with a simplified model.
+- **Characteristics**:
+  - A high bias model is often overly simplistic and unable to capture important patterns in the data. This results in underfitting, where your model performs poorly on both the training data and new data.
+  - Examples of high bias models include linear regression used for complex datasets or simple models that don't account for nonlinear relationships.
+
+### 2. Variance
+
+- **Definition**: Variance refers to the error due to a model's sensitivity to small fluctuations in the training data, leading it to capture noise and details from the training set.
+- **Characteristics**:
+  - A high variance model is too complex and captures too much detail about the training data, including noise. This leads to overfitting, where your model performs very well on the training data but poorly on new data because it doesn't generalize well.
+
+### Trade-off Between Bias and Variance
+
+- **Underfitting vs. Overfitting**: Models that have both high bias and high variance can underfit or overfit their data, respectively.
+  - High Bias + Low Variance: The model is simple but might not capture the underlying trend of the data (underfitting).
+  - Low Bias + High Variance: The model is complex enough to fit the training data well but performs poorly on new data (overfitting).
+
+- **Balancing the Trade-off**: 
+  - In practice, you aim for a good balance where your model has low bias and low variance. This means it generalizes well to new data.
+  - Techniques like cross-validation can help in tuning models to find this optimal balance.
+
+### Strategies to Balance Bias and Variance
+
+- **Model Complexity**: Increase the complexity of the model (e.g., adding more layers in a neural network) to reduce bias but increase variance. Conversely, decrease complexity to reduce overfitting.
+- **Regularization Techniques**: Methods like L1/L2 regularization can help control model complexity by penalizing large weights, reducing variance without excessively increasing bias.
+- **Feature Engineering**: Improve the quality of features used in your models to better capture underlying patterns.
+
+### Example
+Imagine you're trying to predict house prices based on their sizes. A simple linear regression might have high bias because it assumes a straight line relationship (too simplistic). On the other hand, a complex polynomial model might fit training data well but won't generalize well to new houses due to capturing noise in the data (high variance).
+
+By carefully choosing your features and model complexity, you can strike a balance between these two types of errors.
+
+I hope this explanation helps clarify the concepts!",True,115.19947004318237,0.0003771
+Q1,v2,qwen2.5:7b,"You are an academic assistant.
+Answer the following student question in a clear, concise, and accurate manner.
+Use simple language suitable for undergraduate students.
+Question: Explain the concept of backpropagation in neural networks.","Sure! Backpropagation is a method used to train neural networks by adjusting the weights of the connections between neurons. Here’s how it works:
+
+1. **Forward Pass**: First, input data is fed through the network from left (input layer) to right (output layer). Each neuron processes the information and passes it on.
+
+2. **Output Calculation**: The final output is compared with the expected result. This difference gives us an error value for each output node.
+
+3. **Backward Pass & Weight Adjustment**: Starting from the last layer, we move backwards through the network, calculating how much each weight contributed to the error. We use this information to adjust the weights in a way that reduces the overall error. Think of it like ""undoing"" some steps and adjusting them to get closer to the correct output.
+
+4. **Gradient Descent**: During this process, we use something called gradients (which are like slopes) to determine how much each weight should be adjusted. This is done using a method called gradient descent, which tries to minimize the error by slightly changing weights in the direction that reduces the error most.
+
+5. **Repeat**: This whole process is repeated many times (epochs), with different sets of input data, until the network’s errors are minimized and it starts making better predictions.
+
+In simple terms, backpropagation helps a neural network learn from its mistakes by adjusting how strongly each neuron should listen to others!",True,46.984854221343994,0.0001947
+Q2,v2,qwen2.5:7b,"You are an academic assistant.
+Answer the following student question in a clear, concise, and accurate manner.
+Use simple language suitable for undergraduate students.
+Question: What is the difference between supervised and unsupervised learning?","Sure! Let's break it down simply:
+
+**Supervised Learning:** Imagine you're teaching a computer to recognize fruits based on pictures. You show it lots of images (apples, bananas, oranges) and tell it what each one is. The computer learns from these examples and can then identify new fruits you show it later. Here, the ""labels"" or correct answers are provided for training.
+
+**Unsupervised Learning:** Now think about a situation where you have a big box of mixed-up toys (like cars, dolls, blocks) and no one tells you what they are. You need to figure out how to group them on your own. The computer does something similar—it tries to find patterns in the data without any labels or guidance.
+
+In summary:
+- **Supervised Learning** uses labeled data where the correct answer is given.
+- **Unsupervised Learning** works with unlabeled data, trying to find hidden structures or patterns by itself.",True,31.462092876434326,0.0001374
+Q3,v2,qwen2.5:7b,"You are an academic assistant.
+Answer the following student question in a clear, concise, and accurate manner.
+Use simple language suitable for undergraduate students.
+Question: Describe how the Self-Attention mechanism works in Transformers.","Sure! The self-attention mechanism is a key component that allows Transformer models to understand relationships between different words or tokens within a sentence or text.
+
+Imagine you have a set of words, and each word has its own memory, which includes information about other words too—like what they mean, how they are related, and so on. Here’s how it works:
+
+1. **Query (Q), Key (K), and Value (V) Generation**: For each token in the sentence, you create three vectors:
+   - A Query vector (Q)
+   - A Key vector (K)
+   - A Value vector (V)
+
+2. **Attention Scores Calculation**: You calculate how much attention to pay to each word by comparing its key vector with all other keys using a similarity measure, often an inner product followed by a scaling factor and a softmax function. This gives you a score for every pair of tokens.
+
+3. **Weighted Sum of Values**: Using these scores (which are now weights), you combine the value vectors of each token to get an output vector that captures information from all other tokens relevant to the current one.
+
+In simple terms, self-attention lets each word in a sentence “see” and understand the context provided by every other word. This mechanism helps the model capture long-range dependencies without needing recurrent layers, making it much faster and more efficient.
+
+This way, Transformers can process entire sentences at once and are capable of handling tasks like translation or text generation very effectively!",True,49.72598481178284,0.0002013
+Q4,v2,qwen2.5:7b,"You are an academic assistant.
+Answer the following student question in a clear, concise, and accurate manner.
+Use simple language suitable for undergraduate students.
+Question: What is overfitting in machine learning and how can it be mitigated?","Overfitting in machine learning happens when your model learns not only the underlying patterns but also the noise or details in the training data. As a result, the model performs very well on the training data but poorly on new, unseen data.
+
+To mitigate overfitting, you can use several techniques:
+
+1. **Increase Training Data**: More data helps your model generalize better.
+2. **Simplify Your Model**: Use fewer layers or nodes in neural networks, for instance.
+3. **Regularization**: Techniques like L1 and L2 regularization add penalties to the loss function based on the magnitude of coefficients, which can prevent overfitting.
+4. **Cross-Validation**: This helps ensure your model performs well across different subsets of data.
+5. **Early Stopping**: Stop training when performance on a validation set starts to degrade.
+
+By applying these strategies, you can improve your model's ability to perform consistently on new data.",True,29.617799758911133,0.0001356
+Q5,v2,qwen2.5:7b,"You are an academic assistant.
+Answer the following student question in a clear, concise, and accurate manner.
+Use simple language suitable for undergraduate students.
+Question: Explain the trade-off between Bias and Variance in predictive models.","Sure! In machine learning, when we talk about bias and variance, we’re looking at two sources of error that can affect how well a model performs.
+
+**Bias:** This is the error due to erroneous assumptions in the learning algorithm. High bias means your model is too simple and can’t capture the underlying trend of the data well. Think of it like trying to fit a straight line through a curve; you just can't get a good fit because the line isn’t complex enough.
+
+**Variance:** This error occurs when your model is too complex, capturing noise in addition to the underlying pattern in the training data. It's like overfitting—a model with high variance might do well on the training data but poorly on new, unseen data because it’s learned the noise rather than the true relationship between variables.
+
+**Trade-off:** The key idea is that as you make your model more complex (try to reduce bias), you increase variance. Conversely, a simpler model will have higher bias but lower variance. Finding the right balance is crucial for good predictive performance.
+
+In summary:
+- **High Bias & Low Variance:** Model is too simple and underfits the data.
+- **Low Bias & High Variance:** Model is complex and overfits the data.
+
+The goal in machine learning is to find a model with low bias and variance, which generalizes well to new data. This balance helps ensure your model performs reliably on both training and unseen data.",True,46.20699858665466,0.0001977
+Q1,v3,qwen2.5:7b,"You are an academic assistant.
+Answer the student question and return ONLY valid JSON.
+Do not include markdown, explanations outside JSON, or code fences.
+Use this exact JSON schema:
+{
+  ""answer"": ""string"",
+  ""confidence"": ""high | medium | low"",
+  ""key_points"": [""string""]
+}
+Question: Explain the concept of backpropagation in neural networks.","{
+  ""answer"": ""Backpropagation is a widely used algorithm in training artificial neural networks to minimize error between predicted and actual outputs. It involves computing the gradient of the loss function with respect to each weight by the chain rule, iterating backwards through the network's layers."",
+  ""confidence"": ""high"",
+  ""key_points"": [
+    ""Algorithm for minimizing error in neural networks"",
+    ""Computes gradients using the chain rule"",
+    ""Iterates backward through the network layers""
+  ]
+}",True,17.223877906799316,9.27e-05
+Q2,v3,qwen2.5:7b,"You are an academic assistant.
+Answer the student question and return ONLY valid JSON.
+Do not include markdown, explanations outside JSON, or code fences.
+Use this exact JSON schema:
+{
+  ""answer"": ""string"",
+  ""confidence"": ""high | medium | low"",
+  ""key_points"": [""string""]
+}
+Question: What is the difference between supervised and unsupervised learning?","{
+  ""answer"": ""Supervised learning involves training a model on labeled data, where the correct output is provided for each input. Unsupervised learning, on the other hand, deals with unlabeled data, aiming to find hidden patterns or intrinsic structures in the data."",
+  ""confidence"": ""high"",
+  ""key_points"": [
+    ""Labeled data used in supervised learning"",
+    ""Unlabeled data used in unsupervised learning"",
+    ""Supervised learning requires correct outputs for training"",
+    ""Unsupervised learning aims to discover hidden patterns""
+  ]
+}",True,19.436859130859375,0.0001026
+Q3,v3,qwen2.5:7b,"You are an academic assistant.
+Answer the student question and return ONLY valid JSON.
+Do not include markdown, explanations outside JSON, or code fences.
+Use this exact JSON schema:
+{
+  ""answer"": ""string"",
+  ""confidence"": ""high | medium | low"",
+  ""key_points"": [""string""]
+}
+Question: Describe how the Self-Attention mechanism works in Transformers.","{
+  ""answer"": ""Self-attention allows each position in a sequence to attend to all other positions, enabling the model to weigh the importance of different words in the context. This is achieved through three linear projections: Query (Q), Key (K), and Value (V). The attention scores are computed as the dot product between queries and keys, followed by scaling and softmax activation to obtain a probability distribution over all words. The weighted sum of these values then gives the final output for that position."",
+  ""confidence"": ""high"",
+  ""key_points"": [
+    ""Each position attends to all other positions in the sequence"",
+    ""Uses Query (Q), Key (K), and Value (V) projections"",
+    ""Computes attention scores via dot product of Q and K, scaled and normalized with softmax"",
+    ""Weights Values by the computed attention probabilities""
+  ]
+}",True,29.03841209411621,0.0001389
+Q4,v3,qwen2.5:7b,"You are an academic assistant.
+Answer the student question and return ONLY valid JSON.
+Do not include markdown, explanations outside JSON, or code fences.
+Use this exact JSON schema:
+{
+  ""answer"": ""string"",
+  ""confidence"": ""high | medium | low"",
+  ""key_points"": [""string""]
+}
+Question: What is overfitting in machine learning and how can it be mitigated?","{
+  ""answer"": ""Overfitting in machine learning refers to a model that performs well on the training data but poorly on unseen data due to excessive complexity, capturing noise and details from the training dataset that do not generalize well. Mitigation strategies include using simpler models, collecting more training data, applying cross-validation, employing regularization techniques like L1 or L2, and using early stopping during training."",
+  ""confidence"": ""high"",
+  ""key_points"": [
+    ""Model performs well on training data but poorly on unseen data"",
+    ""Excessive complexity capturing noise from the training dataset"",
+    ""Mitigation strategies: simpler models, more training data, cross-validation, regularization, early stopping""
+  ]
+}",True,24.554500341415405,0.00012
+Q5,v3,qwen2.5:7b,"You are an academic assistant.
+Answer the student question and return ONLY valid JSON.
+Do not include markdown, explanations outside JSON, or code fences.
+Use this exact JSON schema:
+{
+  ""answer"": ""string"",
+  ""confidence"": ""high | medium | low"",
+  ""key_points"": [""string""]
+}
+Question: Explain the trade-off between Bias and Variance in predictive models.","{
+  ""answer"": ""In predictive models, bias refers to the error introduced by approximating a real-world problem, which is often complex, by a simpler model. High bias can cause underfitting, where the model fails to capture the underlying trend of the data. Variance, on the other hand, is the error from sensitivity to small fluctuations in the training dataset. High variance can lead to overfitting, where the model captures noise along with the signal. The trade-off between bias and variance means that as you reduce one, the other typically increases, leading to a need for finding an optimal balance to minimize overall prediction errors."",
+  ""confidence"": ""high"",
+  ""key_points"": [
+    ""Bias refers to underfitting due to a model's inability to capture underlying trends."",
+    ""Variance leads to overfitting by capturing noise and details of the training data too closely."",
+    ""Finding an optimal balance between bias and variance is crucial for effective predictive models.""
+  ]
+}",True,30.901224613189697,0.0001539
