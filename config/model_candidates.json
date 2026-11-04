@@ -1,0 +1,12 @@
+{
+  "_comment": "Candidate free Ollama models benchmarked by model_benchmark.py. Edit to add/remove models. Each must be a valid `ollama pull` tag.",
+  "candidates": [
+    {"tag": "gemma3:4b",   "params_b": 4,  "vram_gb": 3.0, "note": "fast fallback, CPU friendly, fits 8 GB"},
+    {"tag": "qwen2.5:7b",  "params_b": 7,  "vram_gb": 4.4, "note": "balanced default, MMLU 74.2, strong JSON"},
+    {"tag": "qwen3:8b",    "params_b": 8,  "vram_gb": 5.0, "note": "newest Qwen, hybrid thinking, top evals"},
+    {"tag": "llama3.1:8b", "params_b": 8,  "vram_gb": 4.9, "note": "strong general baseline"},
+    {"tag": "gemma3:12b",  "params_b": 12, "vram_gb": 7.3, "note": "excellent instruction-following, 12 GB VRAM"}
+  ],
+  "default": "qwen2.5:7b",
+  "composite_weights": {"valid_json": 0.5, "throughput": 0.3, "latency": 0.2}
+}

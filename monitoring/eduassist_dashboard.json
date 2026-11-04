@@ -1,0 +1,67 @@
+{
+  "annotations": {"list": []},
+  "title": "EduAssist LLMOps - Monitoring",
+  "uid": "eduassist-llmops",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "15s",
+  "tags": ["llmops", "eduassist"],
+  "time": {"from": "now-1h", "to": "now"},
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Requests / min",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "datasource": {"uid": "prometheus", "type": "prometheus"},
+      "targets": [{"expr": "sum(rate(eduassist_requests_total[1m])) * 60", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "req/min"}}
+    },
+    {
+      "id": 2, "type": "stat", "title": "p95 Latency (s)",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "datasource": {"uid": "prometheus", "type": "prometheus"},
+      "targets": [{"expr": "histogram_quantile(0.95, sum(rate(eduassist_llm_latency_seconds_bucket[5m])) by (le))", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "s", "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "yellow", "value": 30}, {"color": "red", "value": 60}]}}}
+    },
+    {
+      "id": 3, "type": "stat", "title": "Throughput (tok/s)",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "datasource": {"uid": "prometheus", "type": "prometheus"},
+      "targets": [{"expr": "eduassist_tokens_per_second", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "tok/s", "thresholds": {"mode": "absolute", "steps": [{"color": "red"}, {"color": "yellow", "value": 10}, {"color": "green", "value": 30}]}}}
+    },
+    {
+      "id": 4, "type": "stat", "title": "JSON Validity",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "datasource": {"uid": "prometheus", "type": "prometheus"},
+      "targets": [{"expr": "eduassist_valid_json_rate", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "percentunit", "thresholds": {"mode": "absolute", "steps": [{"color": "red"}, {"color": "yellow", "value": 0.8}, {"color": "green", "value": 0.95}]}}}
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "Latency distribution (s)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "datasource": {"uid": "prometheus", "type": "prometheus"},
+      "targets": [
+        {"expr": "histogram_quantile(0.5, sum(rate(eduassist_llm_latency_seconds_bucket[5m])) by (le))", "legend": "p50", "refId": "A"},
+        {"expr": "histogram_quantile(0.95, sum(rate(eduassist_llm_latency_seconds_bucket[5m])) by (le))", "legend": "p95", "refId": "B"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}}
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "Tokens (in / out) per request",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "datasource": {"uid": "prometheus", "type": "prometheus"},
+      "targets": [
+        {"expr": "sum(rate(eduassist_input_tokens_sum[5m])) / sum(rate(eduassist_input_tokens_count[5m]))", "legend": "avg_in", "refId": "A"},
+        {"expr": "sum(rate(eduassist_output_tokens_sum[5m])) / sum(rate(eduassist_output_tokens_count[5m]))", "legend": "avg_out", "refId": "B"}
+      ]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "Cost per request (USD)",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12},
+      "datasource": {"uid": "prometheus", "type": "prometheus"},
+      "targets": [{"expr": "eduassist_cost_per_request_usd", "legend": "avg_cost", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "currencyUSD"}}
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+groups:
+  - name: eduassist-llmops-alerts
+    rules:
+      - alert: ApiDown
+        expr: up{job="eduassist-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "EduAssist API is down"
+          description: "The LLMOps API has been unreachable for 1 minute."
+
+      - alert: HighLatencyP95
+        expr: histogram_quantile(0.95, rate(eduassist_llm_latency_seconds_bucket[5m])) > 60
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LLM latency p95 above 60s"
+          description: "p95 latency is {{ $value }}s - check GPU residency / model size."
+
+      - alert: LowJsonValidity
+        expr: eduassist_valid_json_rate < 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JSON validity below 80%"
+          description: "valid_json metric = {{ $value }} - the model is breaking the schema."
+
+      - alert: LowThroughput
+        expr: eduassist_tokens_per_second < 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Generation throughput below 5 tok/s"
+          description: "Likely CPU fallback or VRAM spill - verify with `ollama ps`."

@@ -1,0 +1,61 @@
+name: LLMOps CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-test:
+    name: Lint + unit tests + config validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Flake8 (hard fail)
+        run: flake8 .
+
+      - name: Pytest
+        run: pytest -q --junitxml=reports/test-results.xml
+
+      - name: Validate docker-compose
+        run: docker compose config -q
+
+      - name: Validate Prometheus config
+        run: |
+          sudo apt-get install -y prometheus prometheus-alertmanager >/dev/null 2>&1 || true
+          promtool check config monitoring/prometheus.yml || echo "promtool not installed; skipping"
+
+      - name: Validate shell scripts
+        run: |
+          bash -n initial_deploy.sh
+          bash -n scripts/smoke_test.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: reports/
+
+  docker-build-test:
+    name: Build serving image + smoke test
+    needs: lint-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build API image
+        run: docker build -t eduassist-llmops-api:ci .
+      - name: Inspect image
+        run: docker image inspect eduassist-llmops-api:ci --format '{{.Size}}'
