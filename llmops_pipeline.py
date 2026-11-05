@@ -100,6 +100,22 @@ def run_pipeline() -> dict:
 
     mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
     mlflow.set_experiment(config.EXPERIMENT_NAME)
+
+    for v_key in ["v1", "v2", "v3"]:
+        prompt_name = f"academic_qa_{v_key}"
+        
+        # 1. Register prompt and capture the returned Prompt object
+        prompt = mlflow.genai.register_prompt(
+            name=prompt_name,
+            template=PROMPTS[v_key]["template"],
+        )
+        
+        # 2. Use prompt.version dynamically & use the mlflow.genai namespace
+        mlflow.genai.set_prompt_alias(
+            name=prompt_name,
+            alias=f"production_{v_key}",
+            version=prompt.version,  # Dynamically points to the version just created (e.g., 1)
+        )
     client = MlflowClient(tracking_uri=config.MLFLOW_TRACKING_URI)
 
     # --- Cold-start mitigation: warm the model once before timing -------------
@@ -138,7 +154,7 @@ def run_pipeline() -> dict:
                 res = query(model, prompt_text, json_mode=is_json_version(v_key))
                 cb = M.CostBreakdown.from_tokens(res.input_tokens, res.output_tokens)
                 valid = validate_json_response(res.content) if is_json_version(v_key) else True
-                extension = "json" if v_key == "v3" else ("md" if v_key in ["v2", "v3"] else "txt")
+                extension = "json" if v_key == "v3" else ("md" if v_key in ["v1", "v2"] else "txt")
                 mlflow.log_text(
                     res.content, f"responses/{v_key}_{qid}_response.{extension}"
                 )

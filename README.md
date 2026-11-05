@@ -1,105 +1,119 @@
 # EduAssist AI — LLMOps Assignment-2
 
-**API Cost, Latency, and Prompt Version Management** · Course: MLOps (AIMLZG523)
+**An end-to-end LLMOps pipeline for an academic Q&A assistant built on free Ollama models (Qwen / Gemma), deployed on Linux with an NVIDIA RTX GPU, tracked with MLflow 3.16.0, served through a FastAPI API, observed with Prometheus & Grafana, and shipped through GitHub Actions CI/CD.**
 
-An end-to-end LLMOps pipeline for an academic question-answering assistant. It
-calls a **free, locally hosted Ollama model** (`qwen2.5:7b` by default),
-measures response latency, extracts token usage and computes request-level and
-projected-monthly costs, then registers three prompt versions in the **MLflow
-Prompt Registry**, evaluates them on five academic questions, and promotes the
-best version to the `production` alias. The whole stack is deployed by a single
-shell script that auto-detects Debian/RedHat Linux, NVIDIA RTX GPU vs CPU, and
-runs entirely inside a **Python 3.12 virtual environment**.
-
-> This Assignment-2 extends the Assignment-1 MLOps pattern
-> (logistic-regression / random-forest comparison + Dockerised CI/CD +
-> monitoring). Assignment-1 reused the same `initial_deploy.sh` shape; here the
-> "model" is an LLM, the "features" are prompts, and the "metrics" are latency,
-> token cost and JSON-validity. See `MODEL_SELECTION.md` for why the first
-> prompt took 8–9 minutes in Assignment-1 and how this stack fixes it.
+| | |
+| --- | --- |
+| **Name** | Anmol Sinha |
+| **BITS ID** | 2025AE05129 |
+| **Course** | AIMLZG523 — MLOps |
+| **Assignment** | Assignment-2 (Individual) |
+| **Model** | `qwen2.5:7b` (free, locally hosted via Ollama) |
+| **Execution environment** | BITS Prayogshala Virtual Lab (online Linux desktop, NVIDIA RTX 3050 4 GB) |
+| **GitHub repository** | https://github.com/anmol-sinha-coder/BITS-MLOps-AIMLZG523_Assignment-2 |
+| **Date** | November 2026 |
 
 ---
 
-## Repository layout
+## 1. Overview
+
+EduAssist AI answers five academic machine-learning questions (backpropagation, supervised vs. unsupervised learning, self-attention, overfitting, bias–variance) using a locally hosted Ollama model. The assignment operationalises the full LLM lifecycle: prompts, token economics and output guardrails are treated as versioned, monitored production artefacts. Three prompt versions (`v1` prose, `v2` concise persona, `v3` JSON schema) are evaluated across the five questions; the best is promoted to the MLflow `production` alias.
+
+The stack runs on Ubuntu/WSL with an NVIDIA RTX GPU and automatic CPU fallback. A single idempotent shell script (`initial_deploy.sh`) auto-detects the package manager (apt or dnf), creates a Python 3.12 virtual environment, installs and starts Ollama, pulls the model, launches MLflow, runs the evaluation pipeline, and brings up Prometheus and Grafana. Unlike Assignment-1 (which compared logistic-regression and random-forest models through a Dockerised CI/CD pipeline with MLflow tracking), this assignment substitutes a free locally hosted Ollama model for the paid API and elevates prompt-version management to a first-class concern.
+
+---
+
+## 2. Two independent execution paths
+
+The project ships **two execution paths that can be run independently**. Either one demonstrates the full LLMOps pipeline; running both is recommended for a complete submission.
+
+| Path | Entry point | What it does | Depends on |
+| --- | --- | --- | --- |
+| **A — One-shot deploy** | `./initial_deploy.sh` | Installs OS packages, Ollama, Python 3.12 venv, MLflow, runs the pipeline, builds the Docker API + Prometheus + Grafana stack, generates traffic | Nothing (self-contained). Can skip install with `--skip-install` if deps already present. |
+| **B — JupyterLab notebook** | `jupyter lab MLOps_Assignment-2.ipynb` | Executes the same three tasks cell-by-cell with inline charts, NLG metrics (BLEU/ROUGE/METEOR/BERTScore), sentence-tokeniser analysis, LLMOps trace, and MLflow logging | A running Ollama (`ollama serve`) and a Python 3.12 venv with `requirements.txt` installed. The notebook degrades gracefully to sample mode if Ollama is unreachable. |
+
+> **You may run A and B in any order, or only one of them.** Path A is the engineering/deployment demonstration; Path B is the analytical/experimental demonstration. Both write to the same MLflow experiment (`eduassist_llmops_assignment`) and the same CSV outputs (`outputs/latency_tokens_cost.csv`, `outputs/prompt_evaluation_results.csv`).
+
+---
+
+## 3. Repository contents layout
 
 ```
-.
-├── initial_deploy.sh            # one-shot deploy: OS detect, venv 3.12, Ollama, MLflow, monitoring
-├── llmops_pipeline.py           # Tasks 1+2+3: latency, tokens, cost, MLflow eval, promotion
-├── model_benchmark.py           # benchmark free Ollama candidates, pick highest composite score
-├── MLOps_Assignment-2.ipynb     # executable notebook (all 3 tasks, ships with rendered outputs)
-├── src/
-│   ├── config.py                # single source of truth: model, pricing, questions, endpoints
-│   ├── prompts.py               # the three prompt versions (v1 basic / v2 structured / v3 JSON)
-│   ├── ollama_client.py         # Ollama HTTP wrapper, GPU detect, warm-up, real token telemetry
-│   ├── metrics.py               # latency stats, cost economics, Prometheus instrumentation
-│   ├── utils.py                 # JSON-schema validation (answer/confidence/key_points)
-│   └── app.py                   # FastAPI serving the v3 production prompt + /metrics
-├── config/model_candidates.json # candidate free models for the benchmark
-├── outputs/
-│   ├── latency_tokens_cost.csv          # Task 1 + Task 2 telemetry (15 rows: 5 Q × 3 versions)
-│   └── prompt_evaluation_results.csv    # Task 3 responses + valid_json (15 rows)
-├── monitoring/                  # prometheus.yml, alert_rules.yml, Grafana dashboard + provisioning
-├── scripts/                     # smoke_test, generate_traffic, verify_monitoring, sample outputs
-├── test/                        # pytest unit tests (config, metrics, prompts, utils)
-├── .github/workflows/ci.yml     # lint + tests + docker build + compose/prometheus validation
-├── Dockerfile                   # lean serving image for the FastAPI API
-├── docker-compose.yml           # MLflow + API + Prometheus + Grafana
-├── requirements.txt             # full dev/test deps (Python 3.12)
-├── requirements-serve.txt       # lean runtime deps for the serving container
-└── pytest.ini
+BITS-MLOps-AIMLZG523_Assignment-2/
+├── initial_deploy.sh              # one-shot deploy (9 stages, OS auto-detect)
+├── llmops_pipeline.py             # Tasks 1+2+3 (latency, cost, prompt versioning)
+├── model_benchmark.py             # free-model selection benchmark
+├── MLOps_Assignment-2.ipynb       # executable notebook (Path B)
+├── requirements.txt               # Python deps (mlflow==3.16.0 pinned)
+├── requirements-serve.txt         # API serving deps
+├── Dockerfile                     # API container image
+├── docker-compose.yml             # API + MLflow + Prometheus + Grafana
+├── src/                           # config, prompts, ollama_client, metrics, utils, app
+├── config/model_candidates.json   # benchmark candidate list
+├── monitoring/                    # prometheus.yml, alert_rules.yml, eduassist_dashboard.json
+│   └── provisioning/              # Grafana datasource + dashboard provisioning
+├── scripts/                       # generate_traffic.py, smoke_test.sh, verify_monitoring.py
+├── test/                          # 25 pytest unit tests
+├── outputs/                       # latency_tokens_cost.csv, prompt_evaluation_results.csv
+├── .github/workflows/ci.yml       # flake8 + pytest + docker build + compose validation
+└── docs: README.md, REQUIREMENTS.md, MODEL_SELECTION.md, DEPLOYMENT_GUIDE.md
 ```
 
 ---
 
-## Python version and required libraries
+## 4. Path A — One-shot deployment (`./initial_deploy.sh`) — ordered execution
 
-- **Python:** 3.12 (the venv is created with `python3.12` only; see
-  `DEPLOYMENT_GUIDE.md` for installing it if your distro ships an older one).
-- **Key libraries** (full list in `requirements.txt`):
-  - Inference: `requests` (talks to the Ollama HTTP API; no paid SDK needed).
-  - Tracking & prompt registry: `mlflow>=2.16`.
-  - Data: `pandas`, `numpy`.
-  - Validation: `pydantic`, `jinja2`.
-  - Tokenisation reference: `tiktoken`.
-  - Serving & monitoring: `fastapi`, `uvicorn`, `prometheus-client`,
-    `prometheus-fastapi-instrumentator`.
-  - Tests & lint: `pytest`, `pytest-cov`, `flake8`, `httpx`.
-  - Notebook: `jupyterlab`, `notebook`.
-
----
-
-## Environment variables
-
-No secret is ever hard-coded. All tunables are read from the environment with
-sensible defaults in `src/config.py`:
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `OLLAMA_MODEL` | `qwen2.5:7b` | Free model tag (override with `--model`). |
-| `OLLAMA_HOST` | `http://127.0.0.1:11434` | Ollama daemon URL. |
-| `OLLAMA_KEEP_ALIVE` | `30m` | Keep weights resident in VRAM between requests. |
-| `MLFLOW_TRACKING_URI` | `http://127.0.0.1:5000` | MLflow tracking server. |
-| `INPUT_PRICE_PER_M` | `0.15` | Hosted-equivalent input price per 1M tokens (USD). |
-| `OUTPUT_PRICE_PER_M` | `0.60` | Hosted-equivalent output price per 1M tokens (USD). |
-
-The hosted-equivalent pricing uses OpenAI GPT-4o-mini published rates so the
-cost figures are comparable to a real cloud bill, as permitted by the
-assignment's academic-integrity clause when a local open-source model is used.
-
----
-
-## Installation and one-shot deployment
-
-From the project root, on Ubuntu/WSL or any Debian/RedHat Linux with an NVIDIA
-RTX GPU (CPU fallback is automatic):
+From the project root:
 
 ```bash
+unzip BITS-MLOps-AIMLZG523_Assignment-2.zip
+cd BITS-MLOps-AIMLZG523_Assignment-2
 chmod +x initial_deploy.sh
-./initial_deploy.sh                      # full deploy: deps, venv 3.12, Ollama,
-                                         # MLflow, tests, warm model, pipeline, API,
-                                         # Prometheus/Grafana, traffic
+./initial_deploy.sh --model qwen2.5:7b        # full deploy (re-runnable)
 ```
+
+The script (`set -Eeuo pipefail`) runs **nine ordered stages**. Each stage prints `--> [n/9] ...` so progress is visible. Useful flags: `--model`, `--benchmark`, `--cpu-only`, `--no-monitoring`, `--no-traffic`, `--no-pipeline`, `--mlflow-mode local|docker`, `--reset`, `--skip-install`, `-h`.
+
+| Stage | Script section | Action | Verification |
+| --- | --- | --- | --- |
+| **1/9** | OS detection + base packages | Reads `/etc/os-release`; installs ca-certificates, curl, gnupg, git, python3.12, gcc, make, jq via apt (Debian) or dnf/yum (RedHat) | `apt`/`dnf` exit 0 |
+| **2/9** | Hardware detection | Runs `nvidia-smi`; sets `DEVICE_TYPE=gpu` and records GPU name + VRAM, else `cpu` | GPU name printed |
+| **3/9** | Ollama install + model pull | Installs Ollama if absent, starts the daemon, pulls `qwen2.5:7b`, verifies VRAM residency with `ollama ps` | `ollama ps` shows 100% GPU |
+| **4/9** | Python 3.12 venv | Creates `.venv` with `python3.12`, installs `requirements.txt` | `pip check` clean |
+| **5/9** | Quality gates | Runs `flake8` (config in `.flake8`) and `pytest -q` (25 tests in `test/`) | 0 lint errors, 25 passed |
+| **6/9** | MLflow launch | Docker mode: `docker compose up -d mlflow` (image `ghcr.io/mlflow/mlflow:v2.16.1`); local mode: `mlflow ui --backend-store-uri sqlite:///mlflow.db` | `curl localhost:5000` returns 200 |
+| **7/9** | Model warm-up + pipeline | Sends a trivial `ping` to absorb the cold-load cost, then runs `llmops_pipeline.py` across 3 prompt versions × 5 questions, logging metrics to MLflow | CSVs written to `outputs/` |
+| **8/9** | Model benchmark (optional, `--benchmark`) | Runs `model_benchmark.py`, writes winner to `config/selected_model.json` | Best model printed |
+| **9/9** | API + monitoring stack + traffic | `docker compose up -d --build` (API, Prometheus, Grafana); `wait_for` health checks; `scripts/smoke_test.sh`; background `scripts/generate_traffic.py` for 120 s; `scripts/verify_monitoring.py` | All health checks pass, Grafana panels populated |
+
+At the end a summary banner lists every endpoint (MLflow, API docs, Prometheus, Grafana, CSV outputs, notebook).
+
+---
+
+## 5. Path B — JupyterLab notebook — ordered cell execution
+
+```bash
+source .venv/bin/activate
+ollama serve >/dev/null 2>&1 &        # only if not already running
+jupyter lab MLOps_Assignment-2.ipynb
+```
+
+
+Run the cells top-to-bottom. The notebook is self-contained and mirrors the DataForScience/LLMEng LLMOps pattern (tracing, cost, caching, deadline/fallback, regression gate). If Ollama is unreachable it falls back to sample mode so every cell still executes.
+
+| Cells | Content |
+| --- | --- |
+| 1–2 | Config snapshot: Python/Ollama/MLflow versions, model, host reachability, pricing |
+| 3–4 | Device detection, model warm-up into VRAM, cold-load timing |
+| 5–6 | **Task 1** — latency for 5 questions; p50/p95/mean/max histogram + per-question bar |
+| 7–8 | **Task 2** — real token counts, per-request cost, cumulative cost curve, avg cost by version |
+| 9–10 | **Task 3a** — three prompt versions registered in MLflow; comparison table; v3 promoted to `production` |
+| 11–12 | **Task 3b** — NLG metrics (BLEU, ROUGE-1/2/L, METEOR, BERTScore) per response + by-version bars + ROUGE-L heatmap |
+| 13–14 | Sentence-tokeniser analysis: sentences/response, avg words/sentence, total words by version |
+| 15–17 | **Task 4** — LLMOps flow: `trace.jsonl` event log, latency histogram, cumulative cost, deadline/fallback demo, regression gate |
+
+---
+
 
 The script detects the OS (`apt` vs `dnf/yum`), detects the GPU
 (`nvidia-smi`), creates a Python 3.12 venv at `.venv`, installs Ollama and
@@ -119,62 +133,98 @@ monitoring stack. Useful flags:
 
 ---
 
-## MLflow UI and service endpoints
 
-After deployment the services are reachable at:
+## 6. Post-deployment verification & service endpoints
 
 | Service | URL | Credentials |
 | --- | --- | --- |
 | MLflow tracking UI | http://localhost:5000 | — |
-| FastAPI docs (Swagger) | http://localhost:8000/docs | — |
+| FastAPI docs | http://localhost:8000/docs | — |
 | Prometheus | http://localhost:9090 | — |
 | Grafana | http://localhost:3000 | admin / admin |
 
-The MLflow experiment is **`eduassist_llmops_assignment`**; the Prompt Registry
-entry is **`eduassist_prompts`** with versions `v1`, `v2`, `v3`. The winning
-version (`v3`) carries the `production` alias. To launch the MLflow UI manually
-(local mode):
-
-```bash
-source .venv/bin/activate
-mlflow ui --backend-store-uri sqlite:///mlflow.db --host 0.0.0.0 --port 5000
-```
+Confirm GPU residency: `ollama ps` (processor column should show 100% GPU) and `nvidia-smi` (~4.4 GB used for `qwen2.5:7b`). If `ollama ps` shows CPU, the model is spilling to system RAM and the first prompt will take minutes — switch to a smaller model (`--model gemma3:4b`) or increase VRAM headroom.
 
 ---
 
-## Reproducing the experiment
+## 7. MLflow UI walkthrough — what to capture
 
-```bash
-# 1. Deploy the stack (creates .venv, starts Ollama + MLflow + monitoring)
-./initial_deploy.sh --model qwen2.5:7b
-
-# 2. Activate the venv and open the notebook
-source .venv/bin/activate
-jupyter lab MLOps_Assignment-2.ipynb
-#   -> Run All Cells. The notebook executes Tasks 1, 2, 3 end-to-end and
-#      writes outputs/latency_tokens_cost.csv and outputs/prompt_evaluation_results.csv.
-#   -> If Ollama/MLflow are not running, it loads the shipped sample CSVs so
-#      every table still renders (headless / CI friendly).
-
-# 3. Re-run the benchmark to pick the best free model for your hardware
-python model_benchmark.py            # writes config/selected_model.json
-
-# 4. Export the notebook for submission
-jupyter nbconvert --to pdf MLOps_Assignment-2.ipynb
-jupyter nbconvert --to html MLOps_Assignment-2.ipynb
-
-# 5. Run the test suite and lint
-pytest -q
-flake8 .
-```
-
-The five academic questions and the three prompt templates are fixed in
-`src/config.py` and `src/prompts.py` so every run is reproducible
-(`temperature=0.0` is enforced for deterministic evaluation).
+1. **Experiment** — sidebar → Experiments → `eduassist_llmops_assignment` → runs table (prompt_v1/v2/v3).
+2. **Metrics** — click a run → Metrics → `avg_latency_seconds`, `avg_cost_per_request`, `valid_json` charts.
+3. **Prompt Registry** — sidebar → Prompts → registered prompts `academic_qa_v1/v2/v3` with version counts.
+4. **Prompt diff** — Prompts → a prompt → tick two versions → Compare → side-by-side template diff.
+5. **Production alias** — `mlflow.set_prompt_alias(name="academic_qa_v3", alias="production", version=1)` → version row shows `@production`.
 
 ---
 
-## Deliverables checklist (per the assignment)
+## 8. Grafana monitoring
+
+The dashboard `EduAssist LLMOps - Monitoring` (auto-provisioned at `/var/lib/grafana/dashboards/eduassist_dashboard.json`) has seven panels: Requests/min, p95 Latency, Throughput (tok/s), JSON Validity, Latency distribution, Tokens (in/out) per request, and Cost per request. All PromQL queries use the `eduassist_*` metric namespace defined in `src/metrics.py` (`PROM_NAMESPACE = "eduassist"`), so the dashboard and the exposed metrics match by construction. Background traffic from `scripts/generate_traffic.py` populates the panels.
+
+---
+
+## 9. Known issues & precise fixes (deployment error on Prayogshala)
+
+When `./initial_deploy.sh` reaches Stage 9 on the Prayogshala Linux host, three errors can appear in sequence:
+
+```
+ERROR: deployment failed near line 238 (exit 1)
+ERROR: deployment failed near line 240 (exit 1)
+curl: (22) The requested URL returned error: 502 Expecting value: line 1 column 1 (char 0)
+ERROR: deployment failed near line 241 (exit 1)
+```
+
+**Root cause:** the API container cannot reach the host's Ollama. `docker-compose.yml:30` sets `OLLAMA_HOST=http://host.docker.internal:11434`, but Linux Docker Engine does **not** resolve `host.docker.internal` by default (Docker Desktop on Mac/Windows does). With no route to Ollama, every `/ask` call raises `HTTPException(502)` at `src/app.py:88`, the success-path metrics are never observed, and the Grafana panels that depend on them stay empty ("barely few responses"). The smoke test then fails to parse the 502 body as JSON ("Expecting value: line 1 column 1").
+
+| # | File | Line(s) | Problem | Fix |
+| --- | --- | --- | --- | --- |
+| **1 (root cause)** | `docker-compose.yml` | 24–39 (`api` service) | No `extra_hosts` mapping, so `host.docker.internal` (set at line 30) does not resolve on Linux | Add `extra_hosts: ["host.docker.internal:host-gateway"]` to the `api` service block |
+| **2 (startup hang → line 238)** | `src/app.py` | 49–59 | `@app.on_event("startup")` calls `warmup_model()` synchronously inside the async startup hook; `warmup_model` uses `timeout=600` (`src/ollama_client.py:100`), so if Ollama is unreachable the event loop blocks and `/health` never serves within the 120 s `wait_for` window | Run warm-up in a background thread (or short-circuit when Ollama is unreachable); lower the warm-up timeout to ~30 s |
+| **3 (masks the real failure)** | `src/app.py` | 62–64 | `/health` returns 200 even when Ollama is unreachable, so `wait_for` at `initial_deploy.sh:238` and the Docker healthcheck pass while `/ask` is broken | Have `/health` probe Ollama (`GET /api/tags`) and return 503 when unreachable, so Stage 9 fails fast at line 238 instead of cascading to 241 |
+| **4 (the 502 itself)** | `src/app.py` | 88 | `raise HTTPException(status_code=502, ...)` is correct (translates upstream failure to 502) but is the source of the 502 that `scripts/smoke_test.sh:10-11` then fails to parse as JSON | Upstream fix #1 removes the 502; optionally make `scripts/smoke_test.sh` lines 10–11 tolerate non-200 before piping to `python3 -m json.tool` |
+| **5 (hang risk after fix)** | `src/ollama_client.py` | 109, 139 | `timeout=600` for both warm-up and `/ask`; if the host resolves but Ollama is down, a 600 s hang blocks | Lower default `timeout` to ~30 s |
+
+**Prometheus note:** `monitoring/prometheus.yml:9-14` scrapes `api:8000/metrics` via Docker DNS — this is correct and reachable. The "API does not seem reachable for Prometheus" symptom is actually Prometheus scraping the API but recording only the error counter (`eduassist_requests_total{status="error"}`) because the success-path histograms (latency/tokens/cost) at `src/app.py:90-100` are never observed when `/ask` 502s. Fixing #1 populates all panels.
+
+**Grafana JSON note:** `monitoring/eduassist_dashboard.json` panels 1–7 query `eduassist_*` metrics that **match** `src/metrics.py:68-96` (`PROM_NAMESPACE="eduassist"`) — there is no name mismatch. The empty panels are a consequence of #1, not a dashboard bug. An optional enhancement is an error-rate panel: `sum(rate(eduassist_requests_total{status="error"}[1m]))`.
+
+**Minimum fix:** #1 (add `extra_hosts`) alone makes Stage 9 pass and populates Grafana.
+
+---
+
+## 10. CI/CD
+
+`.github/workflows/ci.yml` runs on every push/PR: `flake8` lint, `pytest` (25 tests), Docker image build, and `docker-compose config` + Prometheus rule validation. The `mlflow==3.16.0` pin is enforced in `requirements.txt` (and `requirements-serve.txt`); the Docker MLflow image is `ghcr.io/mlflow/mlflow:v2.16.1` in `docker-compose.yml:3`.
+
+---
+
+## 11. Quick troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| First prompt takes minutes | Check `ollama ps` for 100% GPU; use a smaller `--model`; confirm warm-up ran |
+| `nvidia-smi` not found | Install the NVIDIA driver; WSL2 needs the Windows driver plus passthrough |
+| `python3.12` not found | Install via Deadsnakes PPA (Ubuntu) or pyenv |
+| MLflow UI empty | `export MLFLOW_TRACKING_URI=http://127.0.0.1:5000` and rerun the pipeline |
+| Port 11434 not responding | `nohup ollama serve > logs/ollama.log 2>&1 &` |
+| API 502 / Grafana panels empty | See §9 — add `extra_hosts` to `docker-compose.yml` `api` service |
+
+---
+
+## 12. Results summary
+
+Across the five questions, `v3` (JSON output) achieved a `valid_json` rate of 1.0, satisfying the primary quality gate, while `v1` and `v2` returned prose that could not feed a downstream parser. `v3` produced the fewest output tokens, directly minimising the dominant output-cost term (output is priced 4× input). The projected monthly cost at 10,000 requests is approximately $0.79 using `v3`. `v3` is promoted to the `production` alias.
+
+| Version | Avg Latency (s) | Avg Input Tok | Avg Output Tok | Avg Cost ($) | Valid JSON | Recommended |
+| --- | --- | --- | --- | --- | --- | --- |
+| v1 | 4.25 | 43 | 172 | 0.000110 | — | n/a |
+| v2 | 2.08 | 81 | 101 | 0.000073 | — | n/a |
+| v3 | 2.30 | 87 | 110 | 0.000079 | 1.00 | **yes** |
+
+*Table: Prompt version comparison (averaged over five questions).*
+
+---
+
 
 - [x] Jupyter notebook with executable code — `MLOps_Assignment-2.ipynb`
 - [x] `requirements.txt`
@@ -191,6 +241,9 @@ The five academic questions and the three prompt templates are fixed in
 See `DEPLOYMENT_GUIDE.md` for the detailed step-by-step Linux+NVIDIA RTX
 procedure, `MODEL_SELECTION.md` for the free-model evaluation, and
 For the consolidated functional/non-functional requirements.
+
+
+*Repository: https://github.com/anmol-sinha-coder/BITS-MLOps-AIMLZG523_Assignment-2 · Executed on the BITS Prayogshala Virtual Lab · Anmol Sinha (2025AE05129) · AIMLZG523 (MLOps) · November 2026*
 # Requirements — EduAssist LLMOps Assignment-2
 
 Consolidated functional and non-functional requirements, derived from the

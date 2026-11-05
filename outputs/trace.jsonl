@@ -1,0 +1,13 @@
+{"kind": "llm_call", "stage": "v1", "model": "qwen2.5:7b", "question": "Q1", "version": "v1", "tokens_in": 49, "tokens_out": 340, "latency_s": 51.73, "cost_usd": 0.000211, "run_id": "4a42bb39", "timestamp": 1793881058.0850077}
+{"kind": "llm_call", "stage": "v1", "model": "qwen2.5:7b", "question": "Q2", "version": "v1", "tokens_in": 50, "tokens_out": 443, "latency_s": 76.982, "cost_usd": 0.000273, "run_id": "4a42bb39", "timestamp": 1793881135.1784844}
+{"kind": "llm_call", "stage": "v1", "model": "qwen2.5:7b", "question": "Q3", "version": "v1", "tokens_in": 49, "tokens_out": 674, "latency_s": 113.977, "cost_usd": 0.000412, "run_id": "4a42bb39", "timestamp": 1793881249.250486}
+{"kind": "llm_call", "stage": "v1", "model": "qwen2.5:7b", "question": "Q4", "version": "v1", "tokens_in": 54, "tokens_out": 447, "latency_s": 75.154, "cost_usd": 0.000276, "run_id": "4a42bb39", "timestamp": 1793881324.5036774}
+{"kind": "llm_call", "stage": "v1", "model": "qwen2.5:7b", "question": "Q5", "version": "v1", "tokens_in": 51, "tokens_out": 592, "latency_s": 89.822, "cost_usd": 0.000363, "run_id": "4a42bb39", "timestamp": 1793881414.4170256}
+{"kind": "llm_call", "stage": "v3", "model": "qwen2.5:7b", "cost_usd": 0.00010215, "latency_s": 25.1489, "run_id": "4a42bb39", "timestamp": 1793881415.0561433}
+{"kind": "llm_call", "stage": "v3", "model": "qwen2.5:7b", "cost_usd": 8.79e-05, "latency_s": 21.7375, "run_id": "4a42bb39", "timestamp": 1793881415.0568423}
+{"kind": "llm_call", "stage": "v3", "model": "qwen2.5:7b", "cost_usd": 0.00010755, "latency_s": 27.7447, "run_id": "4a42bb39", "timestamp": 1793881415.057441}
+{"kind": "cache_hit", "stage": "v3", "model": "qwen2.5:7b", "cost_usd": 0.0, "latency_s": 0.0, "run_id": "4a42bb39", "timestamp": 1793881415.0582292}
+{"kind": "cache_hit", "stage": "v3", "model": "qwen2.5:7b", "cost_usd": 0.0, "latency_s": 0.0, "run_id": "4a42bb39", "timestamp": 1793881415.0585752}
+{"kind": "cache_hit", "stage": "v3", "model": "qwen2.5:7b", "cost_usd": 0.0, "latency_s": 0.0, "run_id": "4a42bb39", "timestamp": 1793881415.0588236}
+{"kind": "fallback", "reason": "TimeoutError", "run_id": "4a42bb39", "timestamp": 1793881470.4314432}
+{"kind": "fallback", "reason": "TimeoutError", "run_id": "4a42bb39", "timestamp": 1793882837.875158}

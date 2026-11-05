@@ -8,7 +8,7 @@
 #   ./initial_deploy.sh                         # full: deps, venv, tests, MLflow,
 #                                               #       warm model, run pipeline, API,
 #                                               #       monitoring, traffic
-#   ./initial_deploy.sh --model qwen3:8b        # override the Ollama model
+#   ./initial_deploy.sh --model qwen3:8b  OR   ./initial_deploy.sh --model gemma3:12b     # override the Ollama model
 #   ./initial_deploy.sh --benchmark             # benchmark candidates & pick best
 #   ./initial_deploy.sh --cpu-only              # force CPU (ignore GPU)
 #   ./initial_deploy.sh --no-monitoring         # skip Prometheus/Grafana/API stack
@@ -25,7 +25,7 @@
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 # ---- defaults --------------------------------------------------------------
-MODEL_NAME="${OLLAMA_MODEL:-qwen2.5:7b}"
+MODEL_NAME="${OLLAMA_MODEL:-qwen2.5:7b}"  # gemma3:4b
 VENV_DIR=".venv"
 PYTHON_BIN="python3.12"
 BENCHMARK=0; CPU_ONLY=0; MONITORING=1; TRAFFIC=1; RUN_PIPELINE=1
@@ -130,7 +130,7 @@ wait_for "Ollama API (port 11434)" 60 curl -fsS http://127.0.0.1:11434/api/tags
 
 if [ "$RESET" -eq 1 ]; then
   echo "[+] --reset: removing cached model $MODEL_NAME"
-  ollama rm "$MODEL_NAME" 2>/dev/null || true
+  # ollama rm "$MODEL_NAME" 2>/dev/null || true
 fi
 echo "[+] Pulling model ${MODEL_NAME} (first pull may take several minutes) ..."
 ollama pull "$MODEL_NAME"
