@@ -5,7 +5,7 @@
 requests>=2.31.0
 
 # Tracking, prompt registry, evaluation
-mlflow>=2.16.0
+mlflow>=3.16.0
 pandas>=2.2.0
 numpy>=1.26.0
 pydantic>=2.8.0

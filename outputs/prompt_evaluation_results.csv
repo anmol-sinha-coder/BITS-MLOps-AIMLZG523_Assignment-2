@@ -14,7 +14,7 @@ Here’s a simplified explanation:
 
 5. **Iteration**: Steps 1-4 are repeated for multiple epochs or until the model's performance on a validation set stabilizes or improves no further.
 
-The key idea behind backpropagation is that it enables us to efficiently compute and use the gradient information to optimize the weights, making the neural network learn from its mistakes over time.",True,52.416,0.00021135
+The key idea behind backpropagation is that it enables us to efficiently compute and use the gradient information to optimize the weights, making the neural network learn from its mistakes over time.",True,53.7013,0.00021135
 Q2,v1,qwen2.5:7b,What is the difference between supervised and unsupervised learning?,"Answer the following student question clearly.
 Question: What is the difference between supervised and unsupervised learning?","Sure! Let's break down the differences between supervised and unsupervised learning:
 
@@ -53,7 +53,7 @@ Question: What is the difference between supervised and unsupervised learning?",
    - Supervised learning is used for prediction tasks like classification and regression.
    - Unsupervised learning is useful in scenarios where you want to explore data or find hidden patterns without predefined labels.
 
-Understanding these differences can help you choose the right approach depending on your specific problem and available data!",True,73.3116,0.0002733
+Understanding these differences can help you choose the right approach depending on your specific problem and available data!",True,70.1777,0.0002733
 Q3,v1,qwen2.5:7b,Describe how the Self-Attention mechanism works in Transformers.,"Answer the following student question clearly.
 Question: Describe how the Self-Attention mechanism works in Transformers.","Certainly! The self-attention mechanism is a key component of Transformer models and plays a crucial role in enabling these models to understand the context of words within a sentence or sequence. Here’s a step-by-step explanation:
 
@@ -100,7 +100,7 @@ The final output from the self-attention mechanism can be used as input to the n
 ### Summary
 Self-attention in Transformers allows each element in a sequence to attend to all other elements, capturing context and dependencies effectively. By using multiple attention heads, it can learn different types of relationships within the data.
 
-This mechanism is what makes Transformers powerful for tasks like machine translation, text summarization, and more!",True,105.0576,0.00041175
+This mechanism is what makes Transformers powerful for tasks like machine translation, text summarization, and more!",True,105.0752,0.00041175
 Q4,v1,qwen2.5:7b,What is overfitting in machine learning and how can it be mitigated?,"Answer the following student question clearly.
 Question: What is overfitting in machine learning and how can it be mitigated?","Overfitting in machine learning occurs when a model learns the training data too well, to the point where it captures noise or details that are specific to the training set but do not generalize to new, unseen data. Essentially, an overfitted model performs exceptionally well on the training data but poorly on any other dataset.
 
@@ -123,7 +123,7 @@ Question: What is overfitting in machine learning and how can it be mitigated?",
 5. **Early Stopping**: Monitor the model's performance on a validation set during training and stop when improvements in validation performance start to diminish or reverse.
 6. **Ensemble Methods**: Combine predictions from multiple models (e.g., bagging, boosting) to reduce variance and improve generalization.
 
-By applying these strategies, you can mitigate overfitting and create more robust machine learning models that perform well on both training and unseen data.",True,68.1204,0.0002763
+By applying these strategies, you can mitigate overfitting and create more robust machine learning models that perform well on both training and unseen data.",True,69.1044,0.0002763
 Q5,v1,qwen2.5:7b,Explain the trade-off between Bias and Variance in predictive models.,"Answer the following student question clearly.
 Question: Explain the trade-off between Bias and Variance in predictive models.","Certainly! The concepts of bias and variance are crucial when discussing the performance of predictive models. Let's break down what these terms mean and how they relate to each other.
 
@@ -161,7 +161,7 @@ Imagine you're trying to draw a line through a set of points on a graph:
 
 ### Conclusion
 
-Understanding and managing the trade-off between bias and variance is crucial for building effective predictive models. By carefully selecting and tuning your model, you can achieve a balance that minimizes both types of errors, leading to better generalization performance.",True,89.2434,0.00036285
+Understanding and managing the trade-off between bias and variance is crucial for building effective predictive models. By carefully selecting and tuning your model, you can achieve a balance that minimizes both types of errors, leading to better generalization performance.",True,103.1662,0.00036285
 Q1,v2,qwen2.5:7b,Explain the concept of backpropagation in neural networks.,"You are an academic assistant.
 Answer the following student question in a clear, concise, and accurate manner.
 Use simple language suitable for undergraduate students.
@@ -178,7 +178,7 @@ The goal is to minimize the difference between the predicted and actual outputs 
 
 Think of backpropagation like teaching a student: you show them an answer, tell them if it’s right or wrong, and then help them understand which parts they got right and which parts need improvement. The network does this by itself, adjusting its ""understanding"" (weights) to get better at making predictions over time.
 
-That's the basic idea behind backpropagation in neural networks!",True,41.9853,0.00017865
+That's the basic idea behind backpropagation in neural networks!",True,57.2517,0.00017865
 Q2,v2,qwen2.5:7b,What is the difference between supervised and unsupervised learning?,"You are an academic assistant.
 Answer the following student question in a clear, concise, and accurate manner.
 Use simple language suitable for undergraduate students.
@@ -194,7 +194,7 @@ Question: What is the difference between supervised and unsupervised learning?",
 - **Goal**: The goal is to model the underlying structure or distribution in the data to learn more about it.
 - **Example**: Clustering customers into different groups based on their purchasing behavior. You don’t know beforehand which group a customer belongs to.
 
-In summary, supervised learning uses labeled data to train models that can predict outcomes, while unsupervised learning finds patterns and structures in unlabeled data without any specific outcome to predict.",True,33.7812,0.0001476
+In summary, supervised learning uses labeled data to train models that can predict outcomes, while unsupervised learning finds patterns and structures in unlabeled data without any specific outcome to predict.",True,36.3245,0.0001476
 Q3,v2,qwen2.5:7b,Describe how the Self-Attention mechanism works in Transformers.,"You are an academic assistant.
 Answer the following student question in a clear, concise, and accurate manner.
 Use simple language suitable for undergraduate students.
@@ -217,7 +217,7 @@ Question: Describe how the Self-Attention mechanism works in Transformers.","Sur
 
 7. **Output**: The final output is a weighted sum from all heads, which gives us an updated representation for each token in the sentence.
 
-This mechanism allows the model to weigh the importance of different words in the context of others, making it very effective at understanding and generating human-like text.",True,59.4061,0.00024645
+This mechanism allows the model to weigh the importance of different words in the context of others, making it very effective at understanding and generating human-like text.",True,61.2313,0.00024645
 Q4,v2,qwen2.5:7b,What is overfitting in machine learning and how can it be mitigated?,"You are an academic assistant.
 Answer the following student question in a clear, concise, and accurate manner.
 Use simple language suitable for undergraduate students.
@@ -231,7 +231,7 @@ To mitigate overfitting, you can try these methods:
 4. **Early stopping**: During training, monitor performance on a validation set and stop when performance starts to degrade.
 5. **Simplify the model**: Reduce the complexity of your model by using fewer features or choosing a simpler algorithm.
 
-By applying these strategies, you can make your machine learning models more robust and better at predicting new data.",True,32.7732,0.0001458
+By applying these strategies, you can make your machine learning models more robust and better at predicting new data.",True,34.5351,0.0001458
 Q5,v2,qwen2.5:7b,Explain the trade-off between Bias and Variance in predictive models.,"You are an academic assistant.
 Answer the following student question in a clear, concise, and accurate manner.
 Use simple language suitable for undergraduate students.
@@ -248,7 +248,7 @@ The goal is to find a balance where your model generalizes well to new data. Thi
 In summary:
 - **High Bias, Low Variance**: Model underfits.
 - **Low Bias, High Variance**: Model overfits.
-- The ideal model has low bias and low variance, meaning it performs well both in training and new data.",True,48.7038,0.00020055
+- The ideal model has low bias and low variance, meaning it performs well both in training and new data.",True,53.2105,0.00020055
 Q1,v3,qwen2.5:7b,Explain the concept of backpropagation in neural networks.,"You are an academic assistant.
 Answer the student question and return ONLY valid JSON.
 Do not include markdown, explanations outside JSON, or code fences.
@@ -267,7 +267,7 @@ Question: Explain the concept of backpropagation in neural networks.","{
     ""Propagates errors backward from output to input layers"",
     ""Uses gradient descent for optimization""
   ]
-}",True,2964.1107,0.00010215
+}",True,28.3594,0.00010215
 Q2,v3,qwen2.5:7b,What is the difference between supervised and unsupervised learning?,"You are an academic assistant.
 Answer the student question and return ONLY valid JSON.
 Do not include markdown, explanations outside JSON, or code fences.
@@ -286,7 +286,7 @@ Question: What is the difference between supervised and unsupervised learning?",
     ""Supervised learning aims for prediction"",
     ""Unsupervised learning focuses on pattern discovery""
   ]
-}",True,26.9603,8.79e-05
+}",True,23.1663,8.79e-05
 Q3,v3,qwen2.5:7b,Describe how the Self-Attention mechanism works in Transformers.,"You are an academic assistant.
 Answer the student question and return ONLY valid JSON.
 Do not include markdown, explanations outside JSON, or code fences.
@@ -304,7 +304,7 @@ Question: Describe how the Self-Attention mechanism works in Transformers.","{
     ""Calculation of similarity using dot product"",
     ""Weighted sum computation for focusing on relevant tokens""
   ]
-}",True,25.9875,0.00010755
+}",True,29.7891,0.00010755
 Q4,v3,qwen2.5:7b,What is overfitting in machine learning and how can it be mitigated?,"You are an academic assistant.
 Answer the student question and return ONLY valid JSON.
 Do not include markdown, explanations outside JSON, or code fences.
@@ -325,7 +325,7 @@ Question: What is overfitting in machine learning and how can it be mitigated?",
     ""Reduce model complexity"",
     ""Increase training data""
   ]
-}",True,21.6874,9.27e-05
+}",True,26.5434,9.27e-05
 Q5,v3,qwen2.5:7b,Explain the trade-off between Bias and Variance in predictive models.,"You are an academic assistant.
 Answer the student question and return ONLY valid JSON.
 Do not include markdown, explanations outside JSON, or code fences.
@@ -343,4 +343,4 @@ Question: Explain the trade-off between Bias and Variance in predictive models."
     ""Variance refers to overfitting due to sensitivity to noise in training data."",
     ""Balancing bias and variance is crucial for achieving good predictive performance.""
   ]
-}",True,32.2503,0.00013845
+}",True,41.3002,0.00013845

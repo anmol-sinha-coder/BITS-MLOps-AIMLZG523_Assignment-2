@@ -138,7 +138,7 @@ def run_pipeline() -> dict:
                 res = query(model, prompt_text, json_mode=is_json_version(v_key))
                 cb = M.CostBreakdown.from_tokens(res.input_tokens, res.output_tokens)
                 valid = validate_json_response(res.content) if is_json_version(v_key) else True
-                extension = "md" if v_key == "v1" else ("json" if v_key == "v3" else "txt")
+                extension = "json" if v_key == "v3" else ("md" if v_key in ["v2", "v3"] else "txt")
                 mlflow.log_text(
                     res.content, f"responses/{v_key}_{qid}_response.{extension}"
                 )

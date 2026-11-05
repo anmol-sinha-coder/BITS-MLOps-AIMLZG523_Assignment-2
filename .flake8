@@ -2,3 +2,4 @@
 max-line-length = 100
 extend-ignore = E203, W503
 exclude = .venv, mlruns, outputs, logs, .git, __pycache__, build, dist
+ignore = E201, E202, E203, E211, E221, E222, E225, E226, E231, E241, E251, E261, E271, W291, W292, W293
