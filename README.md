@@ -61,12 +61,117 @@ BITS-MLOps-AIMLZG523_Assignment-2/
 
 ---
 
-## 4. Path A — One-shot deployment (`./initial_deploy.sh`) — ordered execution
+## 4. Requirements — Python version & required libraries
 
-From the project root:
+### 4.1 System prerequisites
+
+| Component | Required version | Notes |
+| --- | --- | --- |
+| **Python** | **3.12** (`python3.12` on PATH) | The venv (Stage 5), the Dockerfile and CI all use 3.12 |
+| OS | Ubuntu 22.04+/Debian (apt) or RHEL/Fedora/Rocky (dnf) | Auto-detected by `initial_deploy.sh`; WSL2 works |
+| GPU + driver | NVIDIA, ≥ 6 GB VRAM recommended | `qwen2.5:7b` Q4_K_M ≈ 4.4 GB; RTX 3050 4 GB runs `gemma3:4b`; automatic CPU fallback |
+| Ollama | current release | Installed and started by Stage 3 of `initial_deploy.sh` |
+| Docker Engine + Compose v2 | current release | Needed for the API + Prometheus + Grafana stack (Stage 9) and Docker MLflow mode |
+| Disk | ≥ 10 GB free | Model ≈ 4.7 GB + Python venv + container images |
+
+### 4.2 Required libraries (`requirements.txt`, Python 3.12)
+
+| Purpose | Packages |
+| --- | --- |
+| Inference (free local Ollama model) | `requests>=2.31.0` |
+| Tracking, prompt registry, evaluation | `mlflow>=2.16.0` (3.16.0 tested), `pandas>=2.2.0`, `numpy>=1.26.0`, `pydantic>=2.8.0`, `jinja2>=3.1.0` |
+| Tokenisation reference + reporting | `tiktoken>=0.7.0`, `matplotlib>=3.8.0`, `tabulate>=0.9.0` |
+| Serving API + monitoring | `fastapi>=0.110.0`, `uvicorn>=0.28.0`, `prometheus-client>=0.20.0`, `prometheus-fastapi-instrumentator>=7.0.0` |
+| Tests and linting | `pytest>=8.0.0`, `pytest-cov>=4.1.0`, `flake8>=7.0.0`, `httpx>=0.27.0` |
+| Notebook execution | `jupyterlab>=4.6.0`, `notebook>=7.6.0` |
+
+The serving container uses the lean, exactly-pinned `requirements-serve.txt`: `fastapi==0.110.0`, `uvicorn==0.28.0`, `pydantic==2.6.4`, `requests==2.31.0`, `prometheus-client==0.20.0`, `prometheus-fastapi-instrumentator==7.0.0`.
+
+### 4.3 Environment variables
+
+No secrets are hard-coded; everything tunable is read from the environment (`src/config.py` is the single source of truth).
+
+| Variable | Default | Defined in | Purpose |
+| --- | --- | --- | --- |
+| `OLLAMA_MODEL` | `qwen2.5:7b` | `src/config.py:18`, `docker-compose.yml:29`, `src/app.py:27` | Model tag served by Ollama |
+| `OLLAMA_HOST` | `http://127.0.0.1:11434` (host) · `http://host.docker.internal:11434` (API container, `docker-compose.yml:30`) | `src/config.py:31` | Ollama daemon address |
+| `OLLAMA_KEEP_ALIVE` | `30m` | `src/config.py:36` | Model stays warm in VRAM between requests |
+| `MLFLOW_TRACKING_URI` | `http://127.0.0.1:5000` | `src/config.py:42` | MLflow tracking server endpoint |
+| `INPUT_PRICE_PER_M` | `0.15` | `src/config.py:53` | Cost model: $ per 1 M input tokens |
+| `OUTPUT_PRICE_PER_M` | `0.60` | `src/config.py:54` | Cost model: $ per 1 M output tokens |
+| `GF_SECURITY_ADMIN_USER` / `GF_SECURITY_ADMIN_PASSWORD` | `admin` / `admin` | `docker-compose.yml:63–64` | Grafana login |
+
+---
+
+## 5. Installation — from `git clone` to a running experiment
+
+**Step 1 — Get the code (initial `git clone` step).**
 
 ```bash
-unzip BITS-MLOps-AIMLZG523_Assignment-2.zip
+git clone https://github.com/anmol-sinha-coder/BITS-MLOps-AIMLZG523_Assignment-2.git
+cd BITS-MLOps-AIMLZG523_Assignment-2
+```
+
+> Working from the submitted zip archive instead? `unzip BITS-MLOps-AIMLZG523_Assignment-2.zip && cd BITS-MLOps-AIMLZG523_Assignment-2` replaces the clone.
+
+**Step 2 — Create the Python 3.12 virtual environment and install the required libraries.**
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+pip check
+```
+
+**Step 3 — Install and start Ollama, pull the model.**
+
+```bash
+mkdir -p logs outputs
+curl -fsSL https://ollama.com/install.sh | sh
+nohup ollama serve > logs/ollama.log 2>&1 &
+ollama pull qwen2.5:7b
+```
+
+**Step 4 — Start the MLflow UI** (local mode, sqlite backend — same command as Stage 7 of `initial_deploy.sh`):
+
+```bash
+nohup mlflow ui --backend-store-uri sqlite:///mlflow.db \
+     --default-artifact-root ./mlruns --host 0.0.0.0 --port 5000 \
+     > logs/mlflow.log 2>&1 &
+```
+
+Open http://localhost:5000 to confirm. Docker alternative: `docker compose up -d mlflow`.
+
+**Step 5 — Run the experiment** (Tasks 1–3: latency, token cost, prompt versioning + MLflow logging):
+
+```bash
+export MLFLOW_TRACKING_URI=http://127.0.0.1:5000
+python llmops_pipeline.py
+```
+
+**Step 6 — Serve the API + monitoring stack.**
+
+```bash
+docker compose up -d --build
+```
+
+**Step 7 — Verify the reproduction.**
+
+- MLflow UI → experiment `eduassist_llmops_assignment` shows the three prompt-version runs, with `academic_qa_v3` carrying the `@production` alias.
+- `outputs/latency_tokens_cost.csv` and `outputs/prompt_evaluation_results.csv` exist and match the tables in §14.
+- `curl http://localhost:8000/health` returns 200; Grafana panels populate once traffic runs.
+
+> **One-command alternative:** Steps 1–6 (except the clone) are automated by `./initial_deploy.sh --model qwen2.5:7b` — see §6.
+
+---
+
+## 6. Path A — One-shot deployment (`./initial_deploy.sh`) — ordered execution
+
+From the project root (after the §5 clone, or fresh):
+
+```bash
+git clone https://github.com/anmol-sinha-coder/BITS-MLOps-AIMLZG523_Assignment-2.git   # skip if already cloned
 cd BITS-MLOps-AIMLZG523_Assignment-2
 chmod +x initial_deploy.sh
 ./initial_deploy.sh --model qwen2.5:7b        # full deploy (re-runnable)
@@ -90,14 +195,13 @@ At the end a summary banner lists every endpoint (MLflow, API docs, Prometheus, 
 
 ---
 
-## 5. Path B — JupyterLab notebook — ordered cell execution
+## 7. Path B — JupyterLab notebook — ordered cell execution
 
 ```bash
 source .venv/bin/activate
 ollama serve >/dev/null 2>&1 &        # only if not already running
 jupyter lab MLOps_Assignment-2.ipynb
 ```
-
 
 Run the cells top-to-bottom. The notebook is self-contained and mirrors the DataForScience/LLMEng LLMOps pattern (tracing, cost, caching, deadline/fallback, regression gate). If Ollama is unreachable it falls back to sample mode so every cell still executes.
 
@@ -114,27 +218,7 @@ Run the cells top-to-bottom. The notebook is self-contained and mirrors the Data
 
 ---
 
-
-The script detects the OS (`apt` vs `dnf/yum`), detects the GPU
-(`nvidia-smi`), creates a Python 3.12 venv at `.venv`, installs Ollama and
-pulls the model, starts MLflow, runs the pipeline, and brings up the
-monitoring stack. Useful flags:
-
-```bash
-./initial_deploy.sh --model qwen3:8b          # override the Ollama model
-./initial_deploy.sh --benchmark               # benchmark candidates & auto-pick best
-./initial_deploy.sh --cpu-only                # force CPU (ignore GPU)
-./initial_deploy.sh --no-monitoring           # skip Prometheus/Grafana/API
-./initial_deploy.sh --mlflow-mode local       # local sqlite MLflow (no Docker)
-./initial_deploy.sh --skip-install            # do not apt/dnf install anything
-./initial_deploy.sh --reset                   # wipe MLflow/Ollama model cache
-./initial_deploy.sh -h | --help               # full help
-```
-
----
-
-
-## 6. Post-deployment verification & service endpoints
+## 8. Post-deployment verification & service endpoints
 
 | Service | URL | Credentials |
 | --- | --- | --- |
@@ -147,7 +231,7 @@ Confirm GPU residency: `ollama ps` (processor column should show 100% GPU) and `
 
 ---
 
-## 7. MLflow UI walkthrough — what to capture
+## 9. MLflow UI walkthrough — what to capture
 
 1. **Experiment** — sidebar → Experiments → `eduassist_llmops_assignment` → runs table (prompt_v1/v2/v3).
 2. **Metrics** — click a run → Metrics → `avg_latency_seconds`, `avg_cost_per_request`, `valid_json` charts.
@@ -157,13 +241,13 @@ Confirm GPU residency: `ollama ps` (processor column should show 100% GPU) and `
 
 ---
 
-## 8. Grafana monitoring
+## 10. Grafana monitoring
 
 The dashboard `EduAssist LLMOps - Monitoring` (auto-provisioned at `/var/lib/grafana/dashboards/eduassist_dashboard.json`) has seven panels: Requests/min, p95 Latency, Throughput (tok/s), JSON Validity, Latency distribution, Tokens (in/out) per request, and Cost per request. All PromQL queries use the `eduassist_*` metric namespace defined in `src/metrics.py` (`PROM_NAMESPACE = "eduassist"`), so the dashboard and the exposed metrics match by construction. Background traffic from `scripts/generate_traffic.py` populates the panels.
 
 ---
 
-## 9. Known issues & precise fixes (deployment error on Prayogshala)
+## 11. Known issues & precise fixes (deployment error on Prayogshala)
 
 When `./initial_deploy.sh` reaches Stage 9 on the Prayogshala Linux host, three errors can appear in sequence:
 
@@ -192,13 +276,13 @@ ERROR: deployment failed near line 241 (exit 1)
 
 ---
 
-## 10. CI/CD
+## 12. CI/CD
 
-`.github/workflows/ci.yml` runs on every push/PR: `flake8` lint, `pytest` (25 tests), Docker image build, and `docker-compose config` + Prometheus rule validation. The `mlflow==3.16.0` pin is enforced in `requirements.txt` (and `requirements-serve.txt`); the Docker MLflow image is `ghcr.io/mlflow/mlflow:v2.16.1` in `docker-compose.yml:3`.
+`.github/workflows/ci.yml` runs on every push/PR: `flake8` lint, `pytest` (25 tests), Docker image build, and `docker-compose config` + Prometheus rule validation. MLflow **3.16.0** is the tested reference version (`mlflow>=2.16.0` in `requirements.txt`; the serving container uses the pinned `requirements-serve.txt`), and the Docker MLflow image is `ghcr.io/mlflow/mlflow:v2.16.1` in `docker-compose.yml:3`.
 
 ---
 
-## 11. Quick troubleshooting
+## 13. Quick troubleshooting
 
 | Symptom | Fix |
 | --- | --- |
@@ -207,11 +291,11 @@ ERROR: deployment failed near line 241 (exit 1)
 | `python3.12` not found | Install via Deadsnakes PPA (Ubuntu) or pyenv |
 | MLflow UI empty | `export MLFLOW_TRACKING_URI=http://127.0.0.1:5000` and rerun the pipeline |
 | Port 11434 not responding | `nohup ollama serve > logs/ollama.log 2>&1 &` |
-| API 502 / Grafana panels empty | See §9 — add `extra_hosts` to `docker-compose.yml` `api` service |
+| API 502 / Grafana panels empty | See §11 — add `extra_hosts` to `docker-compose.yml` `api` service |
 
 ---
 
-## 12. Results summary
+## 14. Results summary
 
 Across the five questions, `v3` (JSON output) achieved a `valid_json` rate of 1.0, satisfying the primary quality gate, while `v1` and `v2` returned prose that could not feed a downstream parser. `v3` produced the fewest output tokens, directly minimising the dominant output-cost term (output is priced 4× input). The projected monthly cost at 10,000 requests is approximately $0.79 using `v3`. `v3` is promoted to the `production` alias.
 
@@ -224,6 +308,8 @@ Across the five questions, `v3` (JSON output) achieved a `valid_json` rate of 1.
 *Table: Prompt version comparison (averaged over five questions).*
 
 ---
+
+
 
 
 - [x] Jupyter notebook with executable code — `MLOps_Assignment-2.ipynb`
@@ -392,3 +478,6 @@ repository.
 | FR-8 (artefacts) | `MLOps_Assignment-2.ipynb`, `requirements*.txt`, `README.md`, report PDF |
 | NFR-1 (perf) | `src/ollama_client.py` (warmup, keep_alive, detect_device) |
 | NFR-5 (observability) | `src/metrics.py`, `src/app.py` |
+
+
+*Repository: https://github.com/anmol-sinha-coder/BITS-MLOps-AIMLZG523_Assignment-2 · Executed on the BITS Prayogshala Virtual Lab · Anmol Sinha (2025AE05129) · AIMLZG523 (MLOps) · November 2026*
